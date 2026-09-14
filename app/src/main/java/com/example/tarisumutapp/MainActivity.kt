@@ -20,12 +20,14 @@ import com.example.tarisumutapp.data.model.Tari
 import com.example.tarisumutapp.ui.screens.BelajarTariScreen
 import com.example.tarisumutapp.ui.screens.DashboardScreen
 import com.example.tarisumutapp.ui.screens.DetailScreen
+import com.example.tarisumutapp.ui.screens.GlosariumScreen
 import com.example.tarisumutapp.ui.screens.HomeScreen
 import com.example.tarisumutapp.ui.screens.KuisScreen
 import com.example.tarisumutapp.ui.screens.MenuUtamaScreen
 import com.example.tarisumutapp.ui.screens.PlayerScreen
 import com.example.tarisumutapp.ui.screens.VideoScreen
 
+// 1. Tambahkan GLOSARIUM ke dalam Enum
 enum class ScreenState {
     MENU_UTAMA,
     DASHBOARD,
@@ -34,7 +36,8 @@ enum class ScreenState {
     KUIS,
     BELAJAR_TARI,
     VIDEO_TARI,
-    PLAYER_VIDEO
+    PLAYER_VIDEO,
+    GLOSARIUM
 }
 
 class MainActivity : ComponentActivity() {
@@ -251,6 +254,7 @@ class MainActivity : ComponentActivity() {
                         onKuisClick = { currentScreen = ScreenState.KUIS },
                         onBelajarTariClick = { currentScreen = ScreenState.BELAJAR_TARI },
                         onVideoClick = { currentScreen = ScreenState.VIDEO_TARI },
+                        onGlosariumClick = { currentScreen = ScreenState.GLOSARIUM }, // <--- Tambahkan baris ini
                         onBackClick = { currentScreen = ScreenState.MENU_UTAMA }
                     )
 
@@ -323,7 +327,13 @@ class MainActivity : ComponentActivity() {
                     ScreenState.BELAJAR_TARI -> BelajarTariScreen(
                         onBackClick = { currentScreen = ScreenState.DASHBOARD }
                     )
-                }            }
+
+                    // 2. Tambahkan Penanganan Layar Glosarium
+                    ScreenState.GLOSARIUM -> GlosariumScreen(
+                        onBackClick = { currentScreen = ScreenState.DASHBOARD }
+                    )
+                }
+            }
         }
     }
 

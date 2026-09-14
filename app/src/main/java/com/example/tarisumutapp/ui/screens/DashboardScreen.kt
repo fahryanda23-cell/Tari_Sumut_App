@@ -3,19 +3,18 @@ package com.example.tarisumutapp.ui.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.tarisumutapp.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -25,12 +24,13 @@ fun DashboardScreen(
     onKuisClick: () -> Unit,
     onBelajarTariClick: () -> Unit,
     onVideoClick: () -> Unit,
+    onGlosariumClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        // Background Motif
+        // Latar Belakang Utama
         Image(
-            painter = painterResource(id = R.drawable.bg_card),
+            painter = painterResource(id = R.drawable.bg_konten),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
@@ -44,7 +44,8 @@ fun DashboardScreen(
                         Text(
                             "Pilih Mode Pembelajaran",
                             color = Color.White,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
                         )
                     },
                     navigationIcon = {
@@ -62,62 +63,65 @@ fun DashboardScreen(
                 )
             }
         ) { innerPadding ->
+            // Tata Letak Kartu Rata & Presisi
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding),
-                horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Card 1: Materi Tari
-                MenuCard(
-                    title = "Materi Tari",
-                    imageResId = R.drawable.card_materi,
-                    onClick = onMateriClick
+                // Kartu 1: Materi
+                MenuImageCard(
+                    imageResId = R.drawable.card_materi, // Pastikan sesuai nama gambar kamu
+                    contentDescription = "Materi",
+                    onClick = onMateriClick,
+                    modifier = Modifier.weight(1f)
                 )
 
-                // Card 2: Kuis & Evaluasi
-                MenuCard(
-                    title = "Kuis & Evaluasi",
-                    imageResId = R.drawable.card_kuis,
-                    onClick = onKuisClick
+                // Kartu 2: Kuis
+                MenuImageCard(
+                    imageResId = R.drawable.card_kuis, // Pastikan sesuai nama gambar kamu
+                    contentDescription = "Kuis",
+                    onClick = onKuisClick,
+                    modifier = Modifier.weight(1f)
                 )
 
-                // Card 3: Video Tari
-                MenuCard(
-                    title = "Video Tari",
-                    imageResId = R.drawable.card_video,
-                    onClick = onVideoClick
+                // Kartu 3: Video
+                MenuImageCard(
+                    imageResId = R.drawable.card_video, // Pastikan sesuai nama gambar kamu
+                    contentDescription = "Video",
+                    onClick = onVideoClick,
+                    modifier = Modifier.weight(1f)
+                )
+
+                // Kartu 4: Glosarium
+                MenuImageCard(
+                    imageResId = R.drawable.card_video, // Pastikan sesuai nama gambar kamu
+                    contentDescription = "Glosarium",
+                    onClick = onGlosariumClick,
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
     }
 }
 
-// Komponen Card khusus Gambar Utuh
+// Komponen Gambar Kartu (Tanpa Text Tambahan & Tanpa Terpotong)
 @Composable
-fun MenuCard(
-    title: String,
+fun MenuImageCard(
     imageResId: Int,
+    contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+    Image(
+        painter = painterResource(id = imageResId),
+        contentDescription = contentDescription,
+        contentScale = ContentScale.Fit, // Menggunakan Fit agar seluruh bingkai kartu terlihat utuh tanpa terpotong
         modifier = modifier
-            // CARA NGERAMPINGIN KARTU:
-            .width(180.dp)  // Tinggal kecilkan angka ini (misal 160.dp atau 150.dp) kalau mau lebih RAMPING
-            .height(280.dp) // Atur tingginya di sini
-            .clip(RoundedCornerShape(16.dp))
+            .fillMaxHeight(0.9f) // Mengatur tinggi proporsional agar pas di layar
             .clickable { onClick() }
-    ) {
-        Image(
-            painter = painterResource(id = imageResId),
-            contentDescription = title,
-            contentScale = ContentScale.FillBounds,
-            modifier = Modifier.fillMaxSize()
-        )
-    }
+    )
 }

@@ -35,7 +35,8 @@ fun KuisScreen(
     var selectedOptionIndex by remember { mutableStateOf<Int?>(null) }
     var score by remember { mutableIntStateOf(0) }
 
-    // State untuk mengontrol kemunculan Dialog Skor Selesai
+    // State baru untuk mengecek apakah jawaban sudah diperiksa
+    var isAnswerSubmitted by remember { mutableStateOf(false) }
     var isQuizFinished by remember { mutableStateOf(false) }
 
     val currentQuestion = questionList[currentQuestionIndex]
@@ -82,7 +83,7 @@ fun KuisScreen(
                     .padding(horizontal = 24.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                // SISI KIRI: Soal & Opsi Jawaban
+                // SISI KIRI: Soal, Opsi Jawaban, dan Kartu Pembahasan
                 Column(
                     modifier = Modifier
                         .weight(1.3f)
@@ -108,6 +109,14 @@ fun KuisScreen(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     currentQuestion.pilihan.forEachIndexed { index, optionText ->
+                        // Penentuan Warna Teks Pilihan berdasarkan Status Jawaban
+                        val textColor = when {
+                            !isAnswerSubmitted -> Color.White.copy(alpha = 0.9f)
+                            index == currentQuestion.jawabanBenar -> Color(0xFF4CAF50) // Hijau jika Benar
+                            index == selectedOptionIndex -> Color(0xFFFF5252) // Merah jika Salah yang dipilih
+                            else -> Color.White.copy(alpha = 0.4f)
+                        }
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -117,21 +126,47 @@ fun KuisScreen(
                         ) {
                             Text(
                                 text = "${optionLabels[index]}. ",
-                                color = Color(0xFFFFD700),
+                                color = if (isAnswerSubmitted && index == currentQuestion.jawabanBenar) Color(0xFF4CAF50) else Color(0xFFFFD700),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp
                             )
                             Text(
                                 text = optionText,
-                                color = Color.White.copy(alpha = 0.9f),
+                                color = textColor,
                                 fontSize = 14.sp,
-                                lineHeight = 18.sp
+                                lineHeight = 18.sp,
+                                fontWeight = if (isAnswerSubmitted && index == currentQuestion.jawabanBenar) FontWeight.Bold else FontWeight.Normal
                             )
+                        }
+                    }
+
+                    // KARTU PEMBAHASAN (Muncul setelah tombol 'Cek Jawaban' diklik)
+                    if (isAnswerSubmitted) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    text = if (selectedOptionIndex == currentQuestion.jawabanBenar) "Jawaban Benar! 🎉" else "Jawaban Kurang Tepat!",
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (selectedOptionIndex == currentQuestion.jawabanBenar) Color(0xFF2E7D32) else Color(0xFFC62828),
+                                    fontSize = 14.sp
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Pembahasan: Kunci jawaban yang benar adalah ${optionLabels[currentQuestion.jawabanBenar]}.",
+                                    fontSize = 13.sp,
+                                    color = Color.Black.copy(alpha = 0.8f)
+                                )
+                            }
                         }
                     }
                 }
 
-                // SISI KANAN: Tombol Pilihan & Selanjutnya/Selesai
+                // SISI KANAN: Tombol Pilihan (A, B, C, D) & Tombol Aksi
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -145,41 +180,55 @@ fun KuisScreen(
                         modifier = Modifier.padding(top = 16.dp)
                     ) {
                         Text(
-                            text = "Pilih Jawaban:",
+                            text = if (isAnswerSubmitted) "Hasil Jawaban:" else "Pilih Jawaban:",
                             color = Color.White,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
                         )
 
+                        // Penentuan Warna Tombol A, B, C, D secara dinamis
                         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                            OptionButton("A", isSelected = selectedOptionIndex == 0) { selectedOptionIndex = 0 }
-                            OptionButton("B", isSelected = selectedOptionIndex == 1) { selectedOptionIndex = 1 }
+                            OptionButton("A", optionIndex = 0, selectedIndex = selectedOptionIndex, correctIndex = currentQuestion.jawabanBenar, isSubmitted = isAnswerSubmitted) {
+                                if (!isAnswerSubmitted) selectedOptionIndex = 0
+                            }
+                            OptionButton("B", optionIndex = 1, selectedIndex = selectedOptionIndex, correctIndex = currentQuestion.jawabanBenar, isSubmitted = isAnswerSubmitted) {
+                                if (!isAnswerSubmitted) selectedOptionIndex = 1
+                            }
                         }
 
                         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                            OptionButton("C", isSelected = selectedOptionIndex == 2) { selectedOptionIndex = 2 }
-                            OptionButton("D", isSelected = selectedOptionIndex == 3) { selectedOptionIndex = 3 }
+                            OptionButton("C", optionIndex = 2, selectedIndex = selectedOptionIndex, correctIndex = currentQuestion.jawabanBenar, isSubmitted = isAnswerSubmitted) {
+                                if (!isAnswerSubmitted) selectedOptionIndex = 2
+                            }
+                            OptionButton("D", optionIndex = 3, selectedIndex = selectedOptionIndex, correctIndex = currentQuestion.jawabanBenar, isSubmitted = isAnswerSubmitted) {
+                                if (!isAnswerSubmitted) selectedOptionIndex = 3
+                            }
                         }
                     }
 
+                    // TOMBOL AKSI 2 FASE: "Cek Jawaban" -> "Selanjutnya / Selesai"
                     Button(
                         onClick = {
-                            // Hitung Skor
-                            if (selectedOptionIndex == currentQuestion.jawabanBenar) {
-                                score += 5
-                            }
-
-                            // Pindah ke soal berikut atau tampilkan dialog hasil
-                            if (currentQuestionIndex < questionList.size - 1) {
-                                currentQuestionIndex++
-                                selectedOptionIndex = null
+                            if (!isAnswerSubmitted) {
+                                // Fase 1: Periksa Jawaban
+                                isAnswerSubmitted = true
+                                if (selectedOptionIndex == currentQuestion.jawabanBenar) {
+                                    score += (100 / questionList.size)
+                                }
                             } else {
-                                isQuizFinished = true // Buka Dialog Skor
+                                // Fase 2: Pindah ke Soal Berikutnya
+                                if (currentQuestionIndex < questionList.size - 1) {
+                                    currentQuestionIndex++
+                                    selectedOptionIndex = null
+                                    isAnswerSubmitted = false
+                                } else {
+                                    isQuizFinished = true
+                                }
                             }
                         },
                         enabled = selectedOptionIndex != null,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFFFD700),
+                            containerColor = if (!isAnswerSubmitted) Color(0xFFFFD700) else Color(0xFF4CAF50),
                             disabledContainerColor = Color.Gray.copy(alpha = 0.5f)
                         ),
                         modifier = Modifier
@@ -187,8 +236,12 @@ fun KuisScreen(
                             .padding(bottom = 8.dp)
                     ) {
                         Text(
-                            text = if (currentQuestionIndex < questionList.size - 1) "Selanjutnya" else "Selesai",
-                            color = Color.Black,
+                            text = when {
+                                !isAnswerSubmitted -> "Cek Jawaban"
+                                currentQuestionIndex < questionList.size - 1 -> "Selanjutnya"
+                                else -> "Selesai"
+                            },
+                            color = if (!isAnswerSubmitted) Color.Black else Color.White,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -197,7 +250,6 @@ fun KuisScreen(
         }
 
         // Pop-up Dialog Skor saat Kuis Selesai
-// Pop-up Dialog Skor saat Kuis Selesai
         if (isQuizFinished) {
             AlertDialog(
                 onDismissRequest = {},
@@ -227,13 +279,13 @@ fun KuisScreen(
                         )
                     }
                 },
-                // Tombol Ulangi Kuis
                 confirmButton = {
                     Button(
                         onClick = {
                             currentQuestionIndex = 0
                             selectedOptionIndex = null
                             score = 0
+                            isAnswerSubmitted = false
                             isQuizFinished = false
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFD700)),
@@ -246,7 +298,6 @@ fun KuisScreen(
                         )
                     }
                 },
-                // Tombol Kembali ke Menu
                 dismissButton = {
                     OutlinedButton(
                         onClick = onBackClick,
@@ -261,15 +312,36 @@ fun KuisScreen(
                 },
                 containerColor = Color(0xFFFFF8E7)
             )
-        }    }
+        }
+    }
 }
 
 @Composable
 fun OptionButton(
     label: String,
-    isSelected: Boolean,
+    optionIndex: Int,
+    selectedIndex: Int?,
+    correctIndex: Int,
+    isSubmitted: Boolean,
     onClick: () -> Unit
 ) {
+    // Logika Perubahan Warna Tombol
+    val isSelected = selectedIndex == optionIndex
+
+    val borderColor = when {
+        !isSubmitted -> if (isSelected) Color(0xFFFFD700) else Color.White.copy(alpha = 0.4f)
+        optionIndex == correctIndex -> Color(0xFF4CAF50) // Border Hijau jika jawaban benar
+        isSelected -> Color(0xFFFF5252) // Border Merah jika pilihan pengguna salah
+        else -> Color.White.copy(alpha = 0.2f)
+    }
+
+    val backgroundColor = when {
+        !isSubmitted -> if (isSelected) Color(0xFFFFD700).copy(alpha = 0.3f) else Color.Black.copy(alpha = 0.2f)
+        optionIndex == correctIndex -> Color(0xFF4CAF50).copy(alpha = 0.4f) // Background Hijau
+        isSelected -> Color(0xFFFF5252).copy(alpha = 0.4f) // Background Merah
+        else -> Color.Black.copy(alpha = 0.2f)
+    }
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -277,19 +349,24 @@ fun OptionButton(
             .clip(RoundedCornerShape(12.dp))
             .border(
                 width = 2.dp,
-                color = if (isSelected) Color(0xFFFFD700) else Color.White.copy(alpha = 0.4f),
+                color = borderColor,
                 shape = RoundedCornerShape(12.dp)
             )
             .clickable { onClick() }
     ) {
         Surface(
-            color = if (isSelected) Color(0xFFFFD700).copy(alpha = 0.3f) else Color.Black.copy(alpha = 0.2f),
+            color = backgroundColor,
             modifier = Modifier.fillMaxSize()
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Text(
                     text = label,
-                    color = if (isSelected) Color(0xFFFFD700) else Color.White,
+                    color = when {
+                        !isSubmitted -> if (isSelected) Color(0xFFFFD700) else Color.White
+                        optionIndex == correctIndex -> Color(0xFF4CAF50)
+                        isSelected -> Color(0xFFFF5252)
+                        else -> Color.White.copy(alpha = 0.4f)
+                    },
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
                 )
